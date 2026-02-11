@@ -433,6 +433,14 @@ function isToday(date) {
   return formatDateKey(date) === formatDateKey(today);
 }
 
+function getWeekNumber(date) {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const dayNum = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+}
+
 // ─── App State ───
 let currentWeekStart = getWeekStart(new Date());
 let editingDay = null;
@@ -472,17 +480,21 @@ function render() {
   app.innerHTML = `
     <div class="header">
       <h1>Hour<span>.</span>log</h1>
+      <a href="annual.html" style="color:var(--accent);text-decoration:none;font-size:14px;font-weight:600;padding:8px 14px;border-radius:10px;background:var(--accent-dim);">Annual →</a>
     </div>
 
     <div class="week-nav">
       <button onclick="prevWeek()">◂</button>
-      <div class="week-label">${weekLabel}</div>
+      <div class="week-label">
+        <div style="font-size:15px;font-weight:600;color:var(--text);font-family:'DM Sans',sans-serif;">Week ${getWeekNumber(currentWeekStart)}</div>
+        ${weekLabel}
+      </div>
       <button onclick="nextWeek()">▸</button>
     </div>
 
     <div style="margin-bottom: 24px"></div>
 
-    <div class="stats-bar">
+    <div class="stats-bar" style="grid-template-columns: 1fr 1fr;">
       <div class="stat-card total">
         <div class="stat-value">${totalHours.toFixed(1)}</div>
         <div class="stat-label">Total Hrs</div>
@@ -490,10 +502,6 @@ function render() {
       <div class="stat-card">
         <div class="stat-value">${avgHours}</div>
         <div class="stat-label">Avg / Day</div>
-      </div>
-      <div class="stat-card overtime">
-        <div class="stat-value">${overtime > 0 ? '+' + overtime.toFixed(1) : '—'}</div>
-        <div class="stat-label">Overtime</div>
       </div>
     </div>
 
@@ -543,9 +551,9 @@ function renderDayCard(date) {
         <div class="edit-row">
           <input type="number" class="hour-input" id="input-${key}" value="${hours ?? ''}"
                  placeholder="0" min="0" max="24" step="0.25" inputmode="decimal"
-                 onkeydown="if(event.key==='Enter')saveDayHours('${key}')">
-          <button class="save-btn" onclick="saveDayHours('${key}')">Save</button>
-          ${hasHours ? `<button class="clear-btn" onclick="clearDay('${key}')">✕</button>` : ''}
+                 onkeydown="if(event.key==='Enter')this.blur()"
+                 onblur="saveDayHours('${key}')">
+          ${hasHours ? `<button class="clear-btn" onclick="event.stopPropagation();clearDay('${key}')">✕</button>` : ''}
         </div>
       </div>
     `;
@@ -577,7 +585,15 @@ function startEdit(key) {
 
 function saveDayHours(key) {
   const input = document.getElementById('input-' + key);
-  const val = parseFloat(input.value);
+  if (!input) return;
+  const raw = input.value.trim();
+  if (raw === '') {
+    // Empty input on blur — just close editing
+    editingDay = null;
+    render();
+    return;
+  }
+  const val = parseFloat(raw);
   if (isNaN(val) || val < 0 || val > 24) {
     showToast('Enter 0–24 hours');
     return;

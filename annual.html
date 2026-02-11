@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Hours">
+<title>Annual View — Hour Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --surface: #141414;
+    --surface-2: #1e1e1e;
+    --border: #2a2a2a;
+    --text: #f0f0f0;
+    --text-dim: #888;
+    --accent: #4ade80;
+    --accent-dim: rgba(74, 222, 128, 0.12);
+    --danger: #f87171;
+    --danger-dim: rgba(248, 113, 113, 0.12);
+    --radius: 14px;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'DM Sans', -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100dvh;
+    padding-top: var(--safe-top);
+    padding-bottom: calc(var(--safe-bottom) + 24px);
+    overflow-x: hidden;
+  }
+
+  .container {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 20px 16px;
+  }
+
+  /* Header */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+
+  .header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+  }
+
+  .header h1 span { color: var(--accent); }
+
+  .nav-link {
+    color: var(--accent);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 8px 14px;
+    border-radius: 10px;
+    background: var(--accent-dim);
+    transition: opacity 0.15s;
+  }
+
+  .nav-link:active { opacity: 0.7; }
+
+  .subtitle {
+    color: var(--text-dim);
+    font-size: 13px;
+    margin-bottom: 24px;
+  }
+
+  /* Year Nav */
+  .year-nav {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .year-nav button {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s;
+  }
+
+  .year-nav button:active { background: var(--surface-2); }
+
+  .year-label {
+    font-size: 20px;
+    font-weight: 700;
+    min-width: 60px;
+    text-align: center;
+  }
+
+  /* Salary Input */
+  .salary-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .salary-label {
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .salary-sublabel {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-top: 2px;
+  }
+
+  .salary-input-wrap {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .salary-prefix {
+    font-family: 'DM Mono', monospace;
+    font-size: 16px;
+    color: var(--text-dim);
+  }
+
+  .salary-input {
+    width: 100px;
+    height: 40px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 16px;
+    text-align: right;
+    padding-right: 10px;
+    outline: none;
+    -webkit-appearance: none;
+  }
+
+  .salary-input:focus { border-color: var(--accent); }
+
+  /* Stats Summary */
+  .stats-bar {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px;
+    text-align: center;
+  }
+
+  .stat-card .stat-value {
+    font-size: 22px;
+    font-weight: 700;
+    font-family: 'DM Mono', monospace;
+    letter-spacing: -1px;
+  }
+
+  .stat-card .stat-label {
+    font-size: 10px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 2px;
+  }
+
+  .stat-card.highlight .stat-value { color: var(--accent); }
+
+  /* Week Rows */
+  .weeks-section h2 {
+    font-size: 14px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+    font-weight: 600;
+  }
+
+  .week-row {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    margin-bottom: 6px;
+    display: grid;
+    grid-template-columns: 70px 1fr 1fr 1fr;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .week-row.current {
+    border-color: var(--accent);
+    background: var(--accent-dim);
+  }
+
+  .week-row.empty {
+    opacity: 0.35;
+  }
+
+  .week-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-dim);
+  }
+
+  .week-row.current .week-num { color: var(--accent); }
+
+  .week-hours {
+    font-family: 'DM Mono', monospace;
+    font-size: 15px;
+    font-weight: 600;
+    text-align: center;
+  }
+
+  .week-avg {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    color: var(--text-dim);
+    text-align: center;
+  }
+
+  .week-rate {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    text-align: right;
+    color: var(--accent);
+  }
+
+  .week-row.empty .week-rate { color: var(--text-dim); }
+
+  .col-header {
+    display: grid;
+    grid-template-columns: 70px 1fr 1fr 1fr;
+    gap: 8px;
+    padding: 0 16px;
+    margin-bottom: 8px;
+  }
+
+  .col-header span {
+    font-size: 10px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+  }
+
+  .col-header span:nth-child(2) { text-align: center; }
+  .col-header span:nth-child(3) { text-align: center; }
+  .col-header span:nth-child(4) { text-align: right; }
+
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-dim);
+    font-size: 14px;
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: calc(var(--safe-bottom) + 30px);
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--accent);
+    color: #000;
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 14px;
+    opacity: 0;
+    transition: all 0.3s ease;
+    z-index: 100;
+    pointer-events: none;
+  }
+
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  @media (prefers-color-scheme: light) {
+    :root {
+      --bg: #f5f5f0;
+      --surface: #ffffff;
+      --surface-2: #eaeae5;
+      --border: #ddd;
+      --text: #111;
+      --text-dim: #777;
+      --accent: #16a34a;
+      --accent-dim: rgba(22, 163, 74, 0.08);
+      --danger: #dc2626;
+      --danger-dim: rgba(220, 38, 38, 0.08);
+    }
+
+    .salary-input { background: var(--surface-2); }
+  }
+</style>
+</head>
+<body>
+
+<div class="container" id="app"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── Data Layer (shared with main app) ───
+const STORAGE_KEY = 'hourtracker_data';
+const SALARY_KEY = 'hourtracker_salary';
+
+function loadData() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; }
+  catch { return {}; }
+}
+
+function getSalary() {
+  return parseFloat(localStorage.getItem(SALARY_KEY)) || 0;
+}
+
+function setSalary(val) {
+  localStorage.setItem(SALARY_KEY, val.toString());
+}
+
+// ─── Date Helpers ───
+function getWeekNumber(date) {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const dayNum = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+}
+
+function getWeekStartFromYearWeek(year, weekNum) {
+  // Jan 4 is always in week 1 (ISO)
+  const jan4 = new Date(year, 0, 4);
+  const dayOfWeek = jan4.getDay() || 7;
+  const monday = new Date(jan4);
+  monday.setDate(jan4.getDate() - dayOfWeek + 1);
+  monday.setDate(monday.getDate() + (weekNum - 1) * 7);
+  return monday;
+}
+
+function formatDateKey(date) {
+  return date.toISOString().split('T')[0];
+}
+
+function formatShortDate(date) {
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+function getCurrentWeekNumber() {
+  return getWeekNumber(new Date());
+}
+
+// ─── Compute weekly data for a year ───
+function computeYearData(year) {
+  const data = loadData();
+  const weeks = [];
+
+  // Get all weeks that have data in this year
+  const totalWeeksInYear = getWeekNumber(new Date(year, 11, 28));
+
+  for (let w = 1; w <= totalWeeksInYear; w++) {
+    const weekStart = getWeekStartFromYearWeek(year, w);
+    let totalHours = 0;
+    let daysWorked = 0;
+
+    for (let d = 0; d < 7; d++) {
+      const day = new Date(weekStart);
+      day.setDate(day.getDate() + d);
+      const key = formatDateKey(day);
+      const hours = data[key];
+      if (hours !== undefined && hours !== null && hours > 0) {
+        totalHours += hours;
+        daysWorked++;
+      }
+    }
+
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekEnd.getDate() + 6);
+
+    weeks.push({
+      weekNum: w,
+      totalHours,
+      daysWorked,
+      avgPerDay: daysWorked > 0 ? totalHours / daysWorked : 0,
+      startDate: weekStart,
+      endDate: weekEnd,
+      hasData: totalHours > 0
+    });
+  }
+
+  return weeks;
+}
+
+// ─── App State ───
+let currentYear = new Date().getFullYear();
+
+// ─── Toast ───
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+// ─── Debounced salary save ───
+let salaryTimeout = null;
+function onSalaryInput(el) {
+  clearTimeout(salaryTimeout);
+  salaryTimeout = setTimeout(() => {
+    const val = parseFloat(el.value.replace(/,/g, ''));
+    if (!isNaN(val) && val >= 0) {
+      setSalary(val);
+      render(true); // re-render but keep focus
+      showToast('Salary saved');
+    }
+  }, 600);
+}
+
+// ─── Render ───
+function render(keepSalaryFocus) {
+  const weeks = computeYearData(currentYear);
+  const salary = getSalary();
+  const currentWeek = new Date().getFullYear() === currentYear ? getCurrentWeekNumber() : -1;
+
+  // Year totals
+  const weeksWithData = weeks.filter(w => w.hasData);
+  const totalHoursYear = weeksWithData.reduce((s, w) => s + w.totalHours, 0);
+  const avgWeeklyHours = weeksWithData.length > 0 ? totalHoursYear / weeksWithData.length : 0;
+  const effectiveRate = salary > 0 && totalHoursYear > 0 ? salary / totalHoursYear : 0;
+  const weeklySalary = salary > 0 ? salary / 52 : 0;
+
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    <div class="header">
+      <h1>Hour<span>.</span>log</h1>
+      <a href="index.html" class="nav-link">← Log Hours</a>
+    </div>
+    <div class="subtitle">Annual Overview</div>
+
+    <div class="year-nav">
+      <button onclick="prevYear()">◂</button>
+      <div class="year-label">${currentYear}</div>
+      <button onclick="nextYear()">▸</button>
+    </div>
+
+    <div class="salary-section">
+      <div>
+        <div class="salary-label">Annual Salary</div>
+        <div class="salary-sublabel">Used to calculate $/hr</div>
+      </div>
+      <div class="salary-input-wrap">
+        <span class="salary-prefix">$</span>
+        <input type="number" class="salary-input" id="salary-input"
+               value="${salary || ''}" placeholder="0"
+               inputmode="numeric" oninput="onSalaryInput(this)">
+      </div>
+    </div>
+
+    <div class="stats-bar">
+      <div class="stat-card highlight">
+        <div class="stat-value">${totalHoursYear.toFixed(0)}</div>
+        <div class="stat-label">YTD Hours</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">${avgWeeklyHours.toFixed(1)}</div>
+        <div class="stat-label">Avg Wk Hrs</div>
+      </div>
+      <div class="stat-card highlight">
+        <div class="stat-value">${effectiveRate > 0 ? '$' + effectiveRate.toFixed(0) : '—'}</div>
+        <div class="stat-label">$/Hour</div>
+      </div>
+    </div>
+
+    <div class="weeks-section">
+      <h2>Weekly Breakdown</h2>
+      <div class="col-header">
+        <span>Week</span>
+        <span>Hours</span>
+        <span>Avg/Day</span>
+        <span>$/Hr</span>
+      </div>
+      ${weeks.map(w => {
+        const isCurrent = w.weekNum === currentWeek;
+        const isEmpty = !w.hasData;
+        const weekRate = weeklySalary > 0 && w.totalHours > 0 ? weeklySalary / w.totalHours : 0;
+        const dateRange = formatShortDate(w.startDate) + '–' + formatShortDate(w.endDate);
+
+        let classes = 'week-row';
+        if (isCurrent) classes += ' current';
+        if (isEmpty) classes += ' empty';
+
+        return `
+          <div class="${classes}" title="${dateRange}">
+            <div class="week-num">Week ${w.weekNum}</div>
+            <div class="week-hours">${w.hasData ? w.totalHours.toFixed(1) + 'h' : '—'}</div>
+            <div class="week-avg">${w.hasData ? w.avgPerDay.toFixed(1) + 'h' : '—'}</div>
+            <div class="week-rate">${weekRate > 0 ? '$' + weekRate.toFixed(0) : '—'}</div>
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
+
+  if (keepSalaryFocus) {
+    const input = document.getElementById('salary-input');
+    if (input) input.focus();
+  }
+
+  // Scroll to current week on first load
+  if (!render._scrolled && currentWeek > 0) {
+    render._scrolled = true;
+    setTimeout(() => {
+      const el = document.querySelector('.week-row.current');
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
+  }
+}
+
+function prevYear() { currentYear--; render(); }
+function nextYear() { currentYear++; render(); }
+
+// ─── Init ───
+render();
+</script>
+</body>
+</html>
