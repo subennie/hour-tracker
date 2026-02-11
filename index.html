@@ -470,7 +470,23 @@ function render() {
   });
 
   const overtime = Math.max(0, totalHours - 40);
-  const avgHours = totalHours > 0 ? (totalHours / 5).toFixed(1) : '0';
+  // Smart average: current week = divide by weekdays elapsed so far, past weeks = divide by max(5, daysWorked)
+  const today = new Date();
+  const todayStart = getWeekStart(today);
+  const isCurrentWeek = formatDateKey(currentWeekStart) === formatDateKey(todayStart);
+
+  let avgDivisor;
+  if (isCurrentWeek) {
+    // Days elapsed this week (Mon=1, Tue=2, ... Sun=7)
+    const dayOfWeek = today.getDay() || 7; // Sunday=7
+    avgDivisor = Math.min(dayOfWeek, 5); // Cap at 5 for weekdays
+    if (avgDivisor === 0) avgDivisor = 1;
+  } else {
+    // Past weeks: divide by 5 or actual days logged if more than 5
+    avgDivisor = Math.max(5, daysWorked);
+  }
+
+  const avgHours = totalHours > 0 ? (totalHours / avgDivisor).toFixed(1) : '0';
   const progressPct = Math.min((totalHours / 40) * 100, 100);
   const isOvertime = totalHours > 40;
 

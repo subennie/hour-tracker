@@ -409,11 +409,27 @@ function computeYearData(year) {
     const weekEnd = new Date(weekStart);
     weekEnd.setDate(weekEnd.getDate() + 6);
 
+    // Smart divisor: current week = weekdays elapsed, past weeks = max(5, daysWorked)
+    const today = new Date();
+    const todayKey = formatDateKey(today);
+    const weekStartKey = formatDateKey(weekStart);
+    const weekEndKey = formatDateKey(weekEnd);
+    const isCurrentWeek = todayKey >= weekStartKey && todayKey <= weekEndKey;
+
+    let avgDivisor;
+    if (isCurrentWeek) {
+      const dayOfWeek = today.getDay() || 7;
+      avgDivisor = Math.min(dayOfWeek, 5);
+      if (avgDivisor === 0) avgDivisor = 1;
+    } else {
+      avgDivisor = Math.max(5, daysWorked);
+    }
+
     weeks.push({
       weekNum: w,
       totalHours,
       daysWorked,
-      avgPerDay: totalHours > 0 ? totalHours / 5 : 0,
+      avgPerDay: totalHours > 0 ? totalHours / avgDivisor : 0,
       startDate: weekStart,
       endDate: weekEnd,
       hasData: totalHours > 0
