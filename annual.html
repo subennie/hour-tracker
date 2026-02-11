@@ -476,8 +476,11 @@ function render(keepSalaryFocus) {
   const avgWeeklyHours = weeksWithData.length > 0 ? totalHoursYear / weeksWithData.length : 0;
   const weeklySalary = salary > 0 ? salary / 52 : 0;
 
-  // Average $/hr across logged weeks
-  const weeklyRates = weeksWithData.map(w => weeklySalary / w.totalHours).filter(r => r > 0 && isFinite(r));
+  // Average $/hr: use each week's avg/day * 5 as estimated weekly hours
+  const weeklyRates = weeksWithData.map(w => {
+    const estimatedWeeklyHours = w.avgPerDay * 5;
+    return estimatedWeeklyHours > 0 ? weeklySalary / estimatedWeeklyHours : 0;
+  }).filter(r => r > 0 && isFinite(r));
   const effectiveRate = weeklyRates.length > 0 ? weeklyRates.reduce((s, r) => s + r, 0) / weeklyRates.length : 0;
 
   const app = document.getElementById('app');
@@ -533,7 +536,8 @@ function render(keepSalaryFocus) {
       ${weeks.map(w => {
         const isCurrent = w.weekNum === currentWeek;
         const isEmpty = !w.hasData;
-        const weekRate = weeklySalary > 0 && w.totalHours > 0 ? weeklySalary / w.totalHours : 0;
+        const estimatedWeekHours = w.avgPerDay * 5;
+        const weekRate = weeklySalary > 0 && estimatedWeekHours > 0 ? weeklySalary / estimatedWeekHours : 0;
         const dateRange = formatShortDate(w.startDate) + '–' + formatShortDate(w.endDate);
 
         let classes = 'week-row';
