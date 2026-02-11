@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Hours">
+<title>Hour Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --surface: #141414;
+    --surface-2: #1e1e1e;
+    --border: #2a2a2a;
+    --text: #f0f0f0;
+    --text-dim: #888;
+    --accent: #4ade80;
+    --accent-dim: rgba(74, 222, 128, 0.12);
+    --danger: #f87171;
+    --danger-dim: rgba(248, 113, 113, 0.12);
+    --radius: 14px;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'DM Sans', -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100dvh;
+    padding-top: var(--safe-top);
+    padding-bottom: calc(var(--safe-bottom) + 24px);
+    overflow-x: hidden;
+  }
+
+  .container {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 20px 16px;
+  }
+
+  /* Header */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 28px;
+  }
+
+  .header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+  }
+
+  .header h1 span { color: var(--accent); }
+
+  .week-nav {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .week-nav button {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s;
+  }
+
+  .week-nav button:active { background: var(--surface-2); }
+
+  .week-label {
+    font-size: 13px;
+    color: var(--text-dim);
+    font-weight: 500;
+    min-width: 120px;
+    text-align: center;
+    font-family: 'DM Mono', monospace;
+  }
+
+  /* Stats Bar */
+  .stats-bar {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px;
+    text-align: center;
+  }
+
+  .stat-card .stat-value {
+    font-size: 26px;
+    font-weight: 700;
+    font-family: 'DM Mono', monospace;
+    letter-spacing: -1px;
+  }
+
+  .stat-card .stat-label {
+    font-size: 11px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 2px;
+  }
+
+  .stat-card.total .stat-value { color: var(--accent); }
+
+  .stat-card.overtime .stat-value { color: var(--danger); }
+
+  /* Progress Bar */
+  .progress-section {
+    margin-bottom: 24px;
+  }
+
+  .progress-bar-bg {
+    width: 100%;
+    height: 8px;
+    background: var(--surface);
+    border-radius: 4px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+
+  .progress-bar-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 4px;
+    transition: width 0.4s ease;
+  }
+
+  .progress-bar-fill.overtime { background: var(--danger); }
+
+  .progress-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-top: 6px;
+    font-family: 'DM Mono', monospace;
+  }
+
+  /* Day Cards */
+  .days-section h2 {
+    font-size: 14px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+    font-weight: 600;
+  }
+
+  .day-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: background 0.15s;
+  }
+
+  .day-card.today {
+    border-color: var(--accent);
+    background: var(--accent-dim);
+  }
+
+  .day-info {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .day-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--border);
+    flex-shrink: 0;
+  }
+
+  .day-card.has-hours .day-dot { background: var(--accent); }
+  .day-card.today .day-dot { background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+
+  .day-name {
+    font-weight: 600;
+    font-size: 15px;
+  }
+
+  .day-date {
+    font-size: 12px;
+    color: var(--text-dim);
+    font-family: 'DM Mono', monospace;
+  }
+
+  .day-hours-display {
+    font-family: 'DM Mono', monospace;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-dim);
+    min-width: 50px;
+    text-align: right;
+  }
+
+  .day-card.has-hours .day-hours-display { color: var(--text); }
+
+  .day-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .hour-input {
+    width: 64px;
+    height: 40px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 16px;
+    text-align: center;
+    outline: none;
+    -webkit-appearance: none;
+  }
+
+  .hour-input:focus { border-color: var(--accent); }
+
+  .save-btn, .edit-btn, .clear-btn {
+    height: 40px;
+    padding: 0 14px;
+    border-radius: 10px;
+    border: none;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .save-btn {
+    background: var(--accent);
+    color: #000;
+  }
+
+  .save-btn:active { transform: scale(0.96); }
+
+  .edit-btn {
+    background: var(--surface-2);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+
+  .clear-btn {
+    background: var(--danger-dim);
+    color: var(--danger);
+    padding: 0 10px;
+    font-size: 12px;
+  }
+
+  /* Empty State */
+  .empty-week {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-dim);
+    font-size: 14px;
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: calc(var(--safe-bottom) + 30px);
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--accent);
+    color: #000;
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 14px;
+    opacity: 0;
+    transition: all 0.3s ease;
+    z-index: 100;
+    pointer-events: none;
+  }
+
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* Edit mode on day card */
+  .day-card.editing {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .edit-row {
+    display: flex;
+    gap: 6px;
+    width: 100%;
+    padding-top: 8px;
+  }
+
+  /* Export button */
+  .export-section {
+    margin-top: 24px;
+    text-align: center;
+  }
+
+  .export-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .export-btn:active { background: var(--surface-2); }
+
+  @media (prefers-color-scheme: light) {
+    :root {
+      --bg: #f5f5f0;
+      --surface: #ffffff;
+      --surface-2: #eaeae5;
+      --border: #ddd;
+      --text: #111;
+      --text-dim: #777;
+      --accent: #16a34a;
+      --accent-dim: rgba(22, 163, 74, 0.08);
+      --danger: #dc2626;
+      --danger-dim: rgba(220, 38, 38, 0.08);
+    }
+
+    .hour-input { background: var(--surface-2); }
+    .save-btn { color: #fff; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container" id="app"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── Data Layer ───
+const STORAGE_KEY = 'hourtracker_data';
+
+function loadData() {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+  } catch { return {}; }
+}
+
+function saveData(data) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+function getHours(dateStr) {
+  const data = loadData();
+  return data[dateStr] ?? null;
+}
+
+function setHours(dateStr, hours) {
+  const data = loadData();
+  if (hours === null || hours === '') {
+    delete data[dateStr];
+  } else {
+    data[dateStr] = parseFloat(hours);
+  }
+  saveData(data);
+}
+
+// ─── Date Helpers ───
+function getWeekStart(date) {
+  const d = new Date(date);
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Monday start
+  d.setDate(diff);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+function getWeekDays(weekStart) {
+  const days = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(weekStart);
+    d.setDate(d.getDate() + i);
+    days.push(d);
+  }
+  return days;
+}
+
+function formatDateKey(date) {
+  return date.toISOString().split('T')[0];
+}
+
+function formatShortDate(date) {
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+function formatDayName(date) {
+  return date.toLocaleDateString('en-US', { weekday: 'long' });
+}
+
+function isToday(date) {
+  const today = new Date();
+  return formatDateKey(date) === formatDateKey(today);
+}
+
+// ─── App State ───
+let currentWeekStart = getWeekStart(new Date());
+let editingDay = null;
+
+// ─── Toast ───
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+// ─── Render ───
+function render() {
+  const days = getWeekDays(currentWeekStart);
+  const weekEnd = new Date(currentWeekStart);
+  weekEnd.setDate(weekEnd.getDate() + 6);
+
+  let totalHours = 0;
+  let daysWorked = 0;
+  days.forEach(d => {
+    const h = getHours(formatDateKey(d));
+    if (h !== null && h > 0) {
+      totalHours += h;
+      daysWorked++;
+    }
+  });
+
+  const overtime = Math.max(0, totalHours - 40);
+  const avgHours = daysWorked > 0 ? (totalHours / daysWorked).toFixed(1) : '0';
+  const progressPct = Math.min((totalHours / 40) * 100, 100);
+  const isOvertime = totalHours > 40;
+
+  const weekLabel = `${formatShortDate(currentWeekStart)} – ${formatShortDate(weekEnd)}`;
+
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    <div class="header">
+      <h1>Hour<span>.</span>log</h1>
+    </div>
+
+    <div class="week-nav">
+      <button onclick="prevWeek()">◂</button>
+      <div class="week-label">${weekLabel}</div>
+      <button onclick="nextWeek()">▸</button>
+    </div>
+
+    <div style="margin-bottom: 24px"></div>
+
+    <div class="stats-bar">
+      <div class="stat-card total">
+        <div class="stat-value">${totalHours.toFixed(1)}</div>
+        <div class="stat-label">Total Hrs</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">${avgHours}</div>
+        <div class="stat-label">Avg / Day</div>
+      </div>
+      <div class="stat-card overtime">
+        <div class="stat-value">${overtime > 0 ? '+' + overtime.toFixed(1) : '—'}</div>
+        <div class="stat-label">Overtime</div>
+      </div>
+    </div>
+
+    <div class="progress-section">
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill ${isOvertime ? 'overtime' : ''}" style="width: ${progressPct}%"></div>
+      </div>
+      <div class="progress-label">
+        <span>${totalHours.toFixed(1)} hrs</span>
+        <span>40 hr target</span>
+      </div>
+    </div>
+
+    <div class="days-section">
+      <h2>This Week</h2>
+      ${days.map(d => renderDayCard(d)).join('')}
+    </div>
+
+    <div class="export-section">
+      <button class="export-btn" onclick="exportData()">Export All Data (CSV)</button>
+    </div>
+  `;
+}
+
+function renderDayCard(date) {
+  const key = formatDateKey(date);
+  const hours = getHours(key);
+  const hasHours = hours !== null && hours > 0;
+  const today = isToday(date);
+  const editing = editingDay === key;
+
+  let classes = 'day-card';
+  if (today) classes += ' today';
+  if (hasHours) classes += ' has-hours';
+  if (editing) classes += ' editing';
+
+  if (editing) {
+    return `
+      <div class="${classes}">
+        <div class="day-info">
+          <div class="day-dot"></div>
+          <div>
+            <div class="day-name">${formatDayName(date)}</div>
+            <div class="day-date">${formatShortDate(date)}</div>
+          </div>
+        </div>
+        <div class="edit-row">
+          <input type="number" class="hour-input" id="input-${key}" value="${hours ?? ''}"
+                 placeholder="0" min="0" max="24" step="0.25" inputmode="decimal"
+                 onkeydown="if(event.key==='Enter')saveDayHours('${key}')">
+          <button class="save-btn" onclick="saveDayHours('${key}')">Save</button>
+          ${hasHours ? `<button class="clear-btn" onclick="clearDay('${key}')">✕</button>` : ''}
+        </div>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="${classes}" onclick="startEdit('${key}')">
+      <div class="day-info">
+        <div class="day-dot"></div>
+        <div>
+          <div class="day-name">${formatDayName(date)}</div>
+          <div class="day-date">${formatShortDate(date)}</div>
+        </div>
+      </div>
+      <div class="day-hours-display">${hasHours ? hours.toFixed(1) + 'h' : '—'}</div>
+    </div>
+  `;
+}
+
+// ─── Actions ───
+function startEdit(key) {
+  editingDay = key;
+  render();
+  setTimeout(() => {
+    const input = document.getElementById('input-' + key);
+    if (input) input.focus();
+  }, 50);
+}
+
+function saveDayHours(key) {
+  const input = document.getElementById('input-' + key);
+  const val = parseFloat(input.value);
+  if (isNaN(val) || val < 0 || val > 24) {
+    showToast('Enter 0–24 hours');
+    return;
+  }
+  setHours(key, val);
+  editingDay = null;
+  render();
+  showToast('Saved ✓');
+}
+
+function clearDay(key) {
+  setHours(key, null);
+  editingDay = null;
+  render();
+  showToast('Cleared');
+}
+
+function prevWeek() {
+  currentWeekStart.setDate(currentWeekStart.getDate() - 7);
+  editingDay = null;
+  render();
+}
+
+function nextWeek() {
+  currentWeekStart.setDate(currentWeekStart.getDate() + 7);
+  editingDay = null;
+  render();
+}
+
+function exportData() {
+  const data = loadData();
+  const keys = Object.keys(data).sort();
+  if (keys.length === 0) {
+    showToast('No data to export');
+    return;
+  }
+  let csv = 'Date,Day,Hours\n';
+  keys.forEach(k => {
+    const d = new Date(k + 'T12:00:00');
+    const day = d.toLocaleDateString('en-US', { weekday: 'long' });
+    csv += `${k},${day},${data[k]}\n`;
+  });
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'hour-tracker-export.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('Exported ✓');
+}
+
+// ─── Init ───
+render();
+</script>
+</body>
+</html>
