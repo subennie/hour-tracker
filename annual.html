@@ -413,7 +413,7 @@ function computeYearData(year) {
       weekNum: w,
       totalHours,
       daysWorked,
-      avgPerDay: daysWorked > 0 ? totalHours / daysWorked : 0,
+      avgPerDay: totalHours > 0 ? totalHours / 5 : 0,
       startDate: weekStart,
       endDate: weekEnd,
       hasData: totalHours > 0
@@ -458,8 +458,11 @@ function render(keepSalaryFocus) {
   const weeksWithData = weeks.filter(w => w.hasData);
   const totalHoursYear = weeksWithData.reduce((s, w) => s + w.totalHours, 0);
   const avgWeeklyHours = weeksWithData.length > 0 ? totalHoursYear / weeksWithData.length : 0;
-  const effectiveRate = salary > 0 && totalHoursYear > 0 ? salary / totalHoursYear : 0;
   const weeklySalary = salary > 0 ? salary / 52 : 0;
+
+  // Average $/hr across logged weeks
+  const weeklyRates = weeksWithData.map(w => weeklySalary / w.totalHours).filter(r => r > 0 && isFinite(r));
+  const effectiveRate = weeklyRates.length > 0 ? weeklyRates.reduce((s, r) => s + r, 0) / weeklyRates.length : 0;
 
   const app = document.getElementById('app');
   app.innerHTML = `
