@@ -464,6 +464,67 @@ function onSalaryInput(el) {
   }, 600);
 }
 
+// ─── Tax Calculation (2025, Single filer, NYC) ───
+function calcFederalTax(gross) {
+  const taxable = Math.max(0, gross - 15750); // 2025 standard deduction
+  const brackets = [
+    [11925, 0.10], [36550, 0.12], [54875, 0.22],
+    [93950, 0.24], [53225, 0.32], [375825, 0.35], [Infinity, 0.37]
+  ];
+  let tax = 0, remaining = taxable;
+  for (const [size, rate] of brackets) {
+    const chunk = Math.min(remaining, size);
+    tax += chunk * rate;
+    remaining -= chunk;
+    if (remaining <= 0) break;
+  }
+  return tax;
+}
+
+function calcNYStateTax(gross) {
+  const taxable = Math.max(0, gross - 8000); // NY standard deduction
+  const brackets = [
+    [8500, 0.04], [3200, 0.045], [2200, 0.0525],
+    [66750, 0.055], [134750, 0.06], [862150, 0.0685],
+    [3922450, 0.0965], [20000000, 0.103], [Infinity, 0.109]
+  ];
+  let tax = 0, remaining = taxable;
+  for (const [size, rate] of brackets) {
+    const chunk = Math.min(remaining, size);
+    tax += chunk * rate;
+    remaining -= chunk;
+    if (remaining <= 0) break;
+  }
+  return tax;
+}
+
+function calcNYCTax(gross) {
+  const taxable = Math.max(0, gross - 8000);
+  const brackets = [
+    [12000, 0.03078], [13000, 0.03762], [25000, 0.03819], [Infinity, 0.03876]
+  ];
+  let tax = 0, remaining = taxable;
+  for (const [size, rate] of brackets) {
+    const chunk = Math.min(remaining, size);
+    tax += chunk * rate;
+    remaining -= chunk;
+    if (remaining <= 0) break;
+  }
+  return tax;
+}
+
+function calcFICA(gross) {
+  const ss = Math.min(gross, 176100) * 0.062;
+  const medicare = gross * 0.0145;
+  const addlMedicare = Math.max(0, gross - 200000) * 0.009;
+  return ss + medicare + addlMedicare;
+}
+
+function calcNetAnnual(gross) {
+  if (gross <= 0) return 0;
+  return gross - calcFederalTax(gross) - calcNYStateTax(gross) - calcNYCTax(gross) - calcFICA(gross);
+}
+
 // ─── Render ───
 function render(keepSalaryFocus) {
   const weeks = computeYearData(currentYear);
@@ -482,6 +543,12 @@ function render(keepSalaryFocus) {
     return estimatedWeeklyHours > 0 ? weeklySalary / estimatedWeeklyHours : 0;
   }).filter(r => r > 0 && isFinite(r));
   const effectiveRate = weeklyRates.length > 0 ? weeklyRates.reduce((s, r) => s + r, 0) / weeklyRates.length : 0;
+
+  const netAnnual = salary > 0 ? calcNetAnnual(salary) : 0;
+  const netRatio = salary > 0 ? netAnnual / salary : 0;
+  const grossWeekly = weeklySalary;
+  const netWeekly = salary > 0 ? netAnnual / 52 : 0;
+  const netEffectiveRate = effectiveRate > 0 ? effectiveRate * netRatio : 0;
 
   const app = document.getElementById('app');
   app.innerHTML = `
@@ -510,7 +577,7 @@ function render(keepSalaryFocus) {
       </div>
     </div>
 
-    <div class="stats-bar">
+    <div class="stats-bar" style="grid-template-columns: 1fr 1fr;">
       <div class="stat-card highlight">
         <div class="stat-value">${totalHoursYear.toFixed(0)}</div>
         <div class="stat-label">YTD Hours</div>
@@ -519,9 +586,27 @@ function render(keepSalaryFocus) {
         <div class="stat-value">${avgWeeklyHours.toFixed(1)}</div>
         <div class="stat-label">Avg Wk Hrs</div>
       </div>
+    </div>
+
+    <div class="stats-bar" style="grid-template-columns: 1fr 1fr;">
+      <div class="stat-card">
+        <div class="stat-value">${grossWeekly > 0 ? '$' + Math.round(grossWeekly).toLocaleString() : '—'}</div>
+        <div class="stat-label">Gross / Wk</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">${netWeekly > 0 ? '$' + Math.round(netWeekly).toLocaleString() : '—'}</div>
+        <div class="stat-label">Net / Wk</div>
+      </div>
+    </div>
+
+    <div class="stats-bar" style="grid-template-columns: 1fr 1fr;">
       <div class="stat-card highlight">
         <div class="stat-value">${effectiveRate > 0 ? '$' + effectiveRate.toFixed(0) : '—'}</div>
-        <div class="stat-label">$/Hour</div>
+        <div class="stat-label">Gross $/Hr</div>
+      </div>
+      <div class="stat-card highlight">
+        <div class="stat-value">${netEffectiveRate > 0 ? '$' + netEffectiveRate.toFixed(0) : '—'}</div>
+        <div class="stat-label">Net $/Hr</div>
       </div>
     </div>
 
