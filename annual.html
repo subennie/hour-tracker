@@ -616,13 +616,13 @@ function render(keepSalaryFocus) {
         <span>Week</span>
         <span>Hours</span>
         <span>Avg/Day</span>
-        <span>$/Hr</span>
+        <span>Net $/Hr</span>
       </div>
       ${weeks.map(w => {
         const isCurrent = w.weekNum === currentWeek;
         const isEmpty = !w.hasData;
         const estimatedWeekHours = w.avgPerDay * 5;
-        const weekRate = weeklySalary > 0 && estimatedWeekHours > 0 ? weeklySalary / estimatedWeekHours : 0;
+        const weekRate = netWeekly > 0 && estimatedWeekHours > 0 ? netWeekly / estimatedWeekHours : 0;
         const dateRange = formatShortDate(w.startDate) + '–' + formatShortDate(w.endDate);
 
         let classes = 'week-row';
