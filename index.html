@@ -521,16 +521,6 @@ function render() {
       </div>
     </div>
 
-    <div class="progress-section">
-      <div class="progress-bar-bg">
-        <div class="progress-bar-fill ${isOvertime ? 'overtime' : ''}" style="width: ${progressPct}%"></div>
-      </div>
-      <div class="progress-label">
-        <span>${totalHours.toFixed(1)} hrs</span>
-        <span>40 hr target</span>
-      </div>
-    </div>
-
     <div class="days-section">
       <h2>This Week</h2>
       ${days.map(d => renderDayCard(d)).join('')}
